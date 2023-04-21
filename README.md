@@ -266,5 +266,3 @@ Please cite Manifest if you used it for any publications. Thanks!!
   howpublished = {\url{https://github.com/HazyResearch/manifest}},
 }
 ```
-
-Thang test 123
