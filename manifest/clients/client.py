@@ -215,9 +215,9 @@ class Client(ABC):
     @retry(
         reraise=True,
         retry=retry_if_ratelimit,
-        # wait=wait_random_exponential(min=1, max=60),
+        #wait=wait_random_exponential(min=1, max=60),
         wait = wait_fixed(61),
-        stop=stop_after_attempt(10),
+        stop=stop_after_attempt(100),
     )
     def _run_completion(
         self, request_params: Dict[str, Any], retry_timeout: int
