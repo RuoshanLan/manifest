@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import aiohttp
 import requests
-from tenacity import RetryCallState, retry, stop_after_attempt, wait_random_exponential
+from tenacity import RetryCallState, retry, stop_after_attempt, wait_random_exponential, wait_fixed
 
 from manifest.request import DEFAULT_REQUEST_KEYS, NOT_CACHE_KEYS, Request
 from manifest.response import RESPONSE_CONSTRUCTORS, Response
@@ -19,12 +19,8 @@ logger = logging.getLogger(__name__)
 def retry_if_ratelimit(retry_base: RetryCallState) -> bool:
     """Return whether to retry if ratelimited."""
     try:
-        if isinstance(retry_base.outcome.exception(), requests.exceptions.HTTPError):
-            exception = cast(
-                requests.exceptions.HTTPError, retry_base.outcome.exception()
-            )
-            if exception.response.status_code == 429:  # type: ignore
-                return True
+        if "rate limit" in str(retry_base.outcome.exception()).lower():
+            return True
     except Exception:
         pass
     return False
@@ -219,7 +215,8 @@ class Client(ABC):
     @retry(
         reraise=True,
         retry=retry_if_ratelimit,
-        wait=wait_random_exponential(min=1, max=60),
+        # wait=wait_random_exponential(min=1, max=60),
+        wait = wait_fixed(61),
         stop=stop_after_attempt(10),
     )
     def _run_completion(
@@ -235,6 +232,7 @@ class Client(ABC):
             response as dict.
         """
         post_str = self.get_generation_url()
+        logger.info("execute request")
         res = requests.post(
             post_str,
             headers=self.get_generation_header(),
