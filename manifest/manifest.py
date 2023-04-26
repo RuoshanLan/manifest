@@ -279,6 +279,7 @@ class Manifest:
         Returns:
             response from prompt.
         """
+        logger.info("manifest run!")
         is_batch = isinstance(prompt, list)
         # Get the client to run
         client = self.client_pool.get_client()
@@ -293,23 +294,26 @@ class Manifest:
         cached_idx_to_response, request_params = self._split_cached_requests(
             request_params, client, overwrite_cache
         )
+        
         # If not None value or empty list - run new request
         if request_params.prompt:
             # Start timing metrics
             self.client_pool.start_timer()
+            logger.info("manifest run client request")
             response = client.run_request(request_params)
             self.client_pool.end_timer()
         else:
             # Nothing to run
             response = None
 
+        #logger.info(f"reponse is {response}")
         final_response = self._stitch_responses_and_cache(
             request=request_params,
             client=client,
             response=response,
             cached_idx_to_response=cached_idx_to_response,
         )
-
+        #logger.info(f"final_reponse is {final_response}")
         # Extract text results
         if return_response:
             return final_response
